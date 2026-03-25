@@ -1,0 +1,12 @@
+# Local dependencies and Wrangler state
+node_modules/
+.wrangler/
+
+# OS noise
+.DS_Store
+
+# Local-only environment files
+.env
+.env.*
+.dev.vars
+.dev.vars.*

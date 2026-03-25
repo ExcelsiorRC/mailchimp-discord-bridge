@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mailchimp-discord-bridge",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-25",
+  "workers_dev": true,
+  "preview_urls": true,
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "NEWSLETTER_STATE",
+      "id": "795f52ada97b4b99a0d766c56dce49d9",
+      "preview_id": "f8553c8405344729989e04c4ce903984"
+    }
+  ]
+}
