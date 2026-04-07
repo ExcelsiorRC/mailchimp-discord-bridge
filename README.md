@@ -9,15 +9,19 @@ Behavior:
 - First run does not post historical items
 - Posts only newly detected items after that
 - Sends Discord embeds with title, link, short description, and footer `Excelsior Running Club`
+- Sanitizes Mailchimp HTML so Discord descriptions do not show CSS or raw markup
+- Removes duplicated leading titles from the description when the newsletter body starts with the same heading
 
 ## Files
 
 - `src/index.ts`: Worker logic
+- `test/sanitize-description.test.ts`: Regression test for description sanitization
+- `.github/workflows/ci.yml`: GitHub Actions workflow that runs tests on `main` pushes and pull requests
 - `wrangler.jsonc`: Worker config, cron trigger, KV binding
 
 ## Prerequisites
 
-- Node.js 18+ or 20+
+- Node.js 22 recommended
 - Install project dependencies:
 
 ```bash
@@ -93,7 +97,21 @@ Notes:
 - No Discord message is sent on that first run
 - Later runs post only items newer than the stored item
 
-## 4. Deploy
+## 4. Run tests
+
+Run the sanitizer regression test locally:
+
+```bash
+npm test
+```
+
+Notes:
+
+- The test uses Node's built-in test runner
+- The current test command uses `--experimental-strip-types`, so Node 22 is the safest local and CI runtime
+- The fixture uses a sanitized Mailchimp-like sample to guard against CSS and duplicate-title regressions
+
+## 5. Deploy
 
 Deploy the Worker:
 
@@ -120,3 +138,12 @@ You need to provide:
 - The Worker assumes the RSS feed is ordered newest-first, which is the normal Mailchimp RSS layout
 - If the previously stored item is no longer present in the feed, the Worker advances the stored cursor to the current latest item and does not backfill older posts
 - RSS parsing is done with small string-based parsing logic to avoid heavy dependencies
+- The Discord description is limited to 240 characters and truncated with an ellipsis when needed
+- The sanitizer strips HTML comments and `<style>`, `<script>`, and `<head>` blocks before flattening the content to plain text
+
+## CI
+
+GitHub Actions runs `npm test` on:
+
+- pushes to `main`
+- all pull requests
