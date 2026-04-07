@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --remote --test-scheduled",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test": "node --test --experimental-strip-types"
   },
   "devDependencies": {
     "wrangler": "^4.39.0"

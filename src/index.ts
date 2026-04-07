@@ -107,7 +107,7 @@ function parseRssItems(xml: string): FeedItem[] {
         id: cleanupText(id),
         title: cleanupText(title),
         link: cleanupText(link),
-        description: summarizeDescription(description),
+        description: summarizeDescription(description, title),
         pubDate: cleanupText(pubDate),
       } satisfies FeedItem;
     })
@@ -129,13 +129,19 @@ function stripCdata(value: string): string {
 
 function stripHtml(value: string): string {
   return value
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<(style|script|head)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
     .replace(/<br\s*\/?>/gi, " ")
     .replace(/<\/p>/gi, " ")
+    .replace(/<\/(div|li|tr|td|th|section|article|h[1-6])>/gi, " ")
     .replace(/<[^>]+>/g, " ");
 }
 
-function summarizeDescription(value: string): string {
-  const plainText = cleanupWhitespace(stripHtml(cleanupText(value)));
+export function summarizeDescription(value: string, title?: string): string {
+  const plainText = removeLeadingTitle(
+    cleanupWhitespace(stripHtml(cleanupText(value))),
+    cleanupWhitespace(cleanupText(title ?? "")),
+  );
 
   if (!plainText) {
     return "New newsletter item";
@@ -148,12 +154,31 @@ function summarizeDescription(value: string): string {
   return `${plainText.slice(0, MAX_DESCRIPTION_LENGTH - 1).trimEnd()}…`;
 }
 
+function removeLeadingTitle(value: string, title: string): string {
+  if (!value || !title) {
+    return value;
+  }
+
+  for (const candidate of titleVariants(title)) {
+    const nextValue = value.replace(
+      new RegExp(`^${escapeRegExp(candidate)}(?:\\s*[:\\-\\u2013\\u2014]?\\s+)?`, "i"),
+      "",
+    );
+    if (nextValue !== value) {
+      return nextValue;
+    }
+  }
+
+  return value;
+}
+
 function cleanupWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
 function decodeXmlEntities(value: string): string {
   return value
+    .replace(/&nbsp;/gi, " ")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
@@ -162,6 +187,21 @@ function decodeXmlEntities(value: string): string {
     .replace(/&amp;/g, "&")
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
     .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)));
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function titleVariants(title: string): string[] {
+  const variants = new Set([title]);
+  const suffix = title.split(":").at(-1)?.trim();
+
+  if (suffix) {
+    variants.add(suffix);
+  }
+
+  return [...variants].filter(Boolean).sort((a, b) => b.length - a.length);
 }
 
 async function postToDiscord(webhookUrl: string, item: FeedItem): Promise<void> {
