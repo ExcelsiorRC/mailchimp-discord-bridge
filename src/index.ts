@@ -1,10 +1,10 @@
-interface Env {
+export interface Env {
   DISCORD_WEBHOOK_URL: string;
   MAILCHIMP_RSS_URL: string;
   NEWSLETTER_STATE: KVNamespace;
 }
 
-interface FeedItem {
+export interface FeedItem {
   id: string;
   title: string;
   link: string;
@@ -26,7 +26,7 @@ export default {
   },
 };
 
-async function handleScheduled(env: Env): Promise<void> {
+export async function handleScheduled(env: Env): Promise<void> {
   const items = await fetchFeedItems(env.MAILCHIMP_RSS_URL);
 
   if (items.length === 0) {
@@ -49,15 +49,17 @@ async function handleScheduled(env: Env): Promise<void> {
   }
 
   const newItems: FeedItem[] = [];
+  let foundLastSeen = false;
 
   for (const item of items) {
     if (item.id === lastSeenId) {
+      foundLastSeen = true;
       break;
     }
     newItems.push(item);
   }
 
-  if (newItems.length === 0) {
+  if (!foundLastSeen) {
     await env.NEWSLETTER_STATE.put(LAST_SEEN_KEY, latestItem.id);
     console.log("Last seen item missing from current feed, advanced cursor without posting");
     return;
@@ -87,7 +89,7 @@ async function fetchFeedItems(feedUrl: string): Promise<FeedItem[]> {
   return parseRssItems(xml);
 }
 
-function parseRssItems(xml: string): FeedItem[] {
+export function parseRssItems(xml: string): FeedItem[] {
   const itemMatches = xml.match(/<item\b[\s\S]*?<\/item>/gi) ?? [];
 
   return itemMatches

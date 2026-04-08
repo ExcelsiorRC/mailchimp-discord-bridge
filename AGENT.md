@@ -18,6 +18,7 @@ This repository is a small Cloudflare Worker that polls a Mailchimp RSS feed and
 
 ## Editing guidance
 
+- Prefer red/green TDD for behavior changes: add or update a failing test first, then implement the fix, then rerun the suite until it passes
 - Prefer small, dependency-free parsing changes unless there is a clear need for a library
 - If you touch description formatting, update or add a regression test in `test/sanitize-description.test.ts`
 - If CI behavior changes, keep `.github/workflows/ci.yml` aligned with the documented local test command
