@@ -9,6 +9,6 @@
     "test": "node --test --experimental-strip-types"
   },
   "devDependencies": {
-    "wrangler": "^4.39.0"
+    "wrangler": "^4.81.0"
   }
 }
